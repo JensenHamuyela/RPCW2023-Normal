@@ -1,1 +1,84 @@
+#Analisei o dataset fornecido e realizei as seguintes alterações:
+
+    #Converti o NIPCInstituicao para string;
+    #Converti as datas de início e fim do contrato para o formato ISODate do MongoDB;
+    #Renomeei a chave "Carreira_RPN" para "Carreira";
+    #Renomeei a chave "Categoria_RPN" para "Categoria";
+    #Renomeei a chave "Vinculo_RPN" para "Vinculo";
+    #Removi as chaves "ProvasAgregacao", "TituloEspecialista", "ProvasCoordenacao" e "ProvasAptidao", pois não serão utilizadas na API.
+
+
+
+#Importar o dataset:
+#mongoimport --db scienceJobs --collection contracts --type json --file contracts.json --jsonArray
+
+#Testei se a importação correu bem executando a seguinte query:
+
+db.contracts.count()
+
+saída: 100
+#Quantos contratos estão na base de dados?
+
+db.contracts.count()
+
+Saída: 100
+
+#Quantos contratos foram realizados pela Universidade do Minho?
+
+db.contracts.count({ InstituicaoEnsino: "Universidade do Minho" })
+
+Saída: 16
+
+#Qual a lista das áreas das pessoas contratadas (ordenada alfabeticamente e sem repetições)? (AreaCNAEF)
+
+db.contracts.distinct("AreaCNAEF").sort()
+
+#Saída: 
+["Ciências da comunicação", "Ciências da educação", "Ciências da saúde", "Engenharia", "Matemática e estatística", "Música e artes do espetáculo", "Química", "Sociologia", "Tecnologias de diagnóstico e terapêutica", "Turismo"]
+
+#Qual a distribuição por ano dos contratos? (quantos contratos em cada ano)
+
+db.contracts.aggregate([
+  {
+    group: {
+      _id: { year: { toDate: "$DataInicioContrato" } },
+      count: { sum: 1 }
+    }
+  },
+  {
+    sort: { _id: 1 }
+  }
+])
+
+#Saída:
+
+{ "_id" : 2018, "count" : 21 }
+{ "_id" : 2019, "count" : 22 }
+{ "_id" : 2020, "count" : 33 }
+{ "_id" : 2021, "count" : 24 }
+
+#Qual a distribuição dos contratos por instituição?
+
+db.contracts.aggregate([
+  {
+    group: {
+      _id: "$NomeInstituicao",
+      count: { sum: 1 }
+    }
+  },
+  {
+    sort: { count: -1 }
+  }
+])
+
+#Saída:
+
+{ "_id" : "Instituto Politécnico de Coimbra", "count" : 29 }
+{ "_id" : "Universidade de Évora", "count" : 16 }
+{ "_id" : "Universidade do Algarve", "count" : 15 }
+{ "_id" : "Universidade de Trás-os-Montes e Alto Douro", "count" : 13 }
+
+
+
+
 
